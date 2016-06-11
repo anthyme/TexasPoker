@@ -25,11 +25,14 @@ let (|IsGroup|_|) pair three four cards =
     | _,_,1 -> check 4 four
     | pair,three,0 -> (check 2 pair) && (check 3 three)
     |> ifSome IsGroup
+    
+let (|IsFlush|_|) cards = getGroups snd 5 cards >= 1 |> ifSome IsFlush
 
 let findCombination (cardSet:string) = 
     match cardSet |> convertCardSet |> List.sort with
     | IsGroup 0 0 1 -> FourSame
     | IsGroup 1 1 0 -> FullHouse
+    | IsFlush       -> Flush
     | IsGroup 0 1 0 -> ThreeSame
     | IsGroup 2 0 0 -> TwoPair
     | IsGroup 1 0 0 -> OnePair
