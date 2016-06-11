@@ -28,11 +28,26 @@ let (|IsGroup|_|) pair three four cards =
     
 let (|IsFlush|_|) cards = getGroups snd 5 cards >= 1 |> ifSome IsFlush
 
+let (|IsStraight|_|) cards = 
+    let compareCard a b = match fst a, fst b with | Ace,Two -> -1 | a,b -> compare a b
+    let folder cards card =
+        match cards,card with
+        | [],c -> [c]
+        | cards,_ when Seq.length cards = 5 -> cards
+        | head::tail,c when compareCard head c = -1 -> c :: cards
+        | head::tail,c when compareCard head c = 0 -> cards
+        | _ -> []
+
+    let initial = match List.last cards with Ace,s -> [Ace,s] | _ -> []
+    Seq.fold folder initial cards |> Seq.length |> (=) 5 |> ifSome IsStraight
+
+
 let findCombination (cardSet:string) = 
     match cardSet |> convertCardSet |> List.sort with
     | IsGroup 0 0 1 -> FourSame
     | IsGroup 1 1 0 -> FullHouse
     | IsFlush       -> Flush
+    | IsStraight    -> Straight
     | IsGroup 0 1 0 -> ThreeSame
     | IsGroup 2 0 0 -> TwoPair
     | IsGroup 1 0 0 -> OnePair
