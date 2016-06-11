@@ -15,7 +15,7 @@ let parseRank = function
 let convertCardSet (txt:string) = txt.Split([|' '|]) |> Seq.map (fun x -> parseRank x.[0], parseSuit x.[1]) |> List.ofSeq
 
 let getGroups f size cards = 
-    List.groupBy f cards |> List.map (fun (r,s) -> r,Seq.length s) |> (Seq.filter (snd >> (=) size) >> Seq.length)
+    Seq.groupBy f cards |> Seq.map (fun (r,s) -> r,Seq.length s) |> (Seq.filter (snd >> (=) size) >> Seq.length)
 
 let ifSome value boolean = if boolean then Some value else None
 
@@ -25,7 +25,7 @@ let (|IsGroup|_|) pair three four cards =
     
 let (|IsFlush|_|) cards = getGroups snd 5 cards >= 1 |> ifSome IsFlush
 
-let (|IsStraight|_|) cards = 
+let (|IsStraight|IsStraightFlush|Nothing|) cards = 
     let compareCard a b = match fst a, fst b with | Ace,Two -> -1 | a,b -> compare a b
     let folder cards card =
         match cards,card with
@@ -34,13 +34,20 @@ let (|IsStraight|_|) cards =
         | head::tail,c when compareCard head c = -1 -> c :: cards
         | head::tail,c when compareCard head c = 0 -> cards
         | _ -> []
+    let isStraight cards =
+        let initial = match List.last cards with Ace,s -> [Ace,s] | _ -> []
+        Seq.fold folder initial cards |> Seq.length |> (=) 5 
 
-    let initial = match List.last cards with Ace,s -> [Ace,s] | _ -> []
-    Seq.fold folder initial cards |> Seq.length |> (=) 5 |> ifSome IsStraight
+    let flushs = Seq.groupBy snd cards |> Seq.filter (snd >> Seq.length >> (<=) 5) |> Seq.map (snd >> List.ofSeq) |> Seq.tryHead
+    match cards,flushs with
+    | _, Some(flushs) when isStraight flushs -> IsStraightFlush
+    | cards,_ when isStraight cards -> IsStraight
+    | _ -> Nothing
 
 
 let findCombination (cardSet:string) = 
     match cardSet |> convertCardSet |> List.sort with
+    | IsStraightFlush -> StraightFlush
     | IsGroup 0 0 1 -> FourSame
     | IsGroup 1 1 0 -> FullHouse
     | IsFlush       -> Flush
@@ -74,6 +81,6 @@ type ``Given a card set`` () =
     [<Fact>] let ``is a flush`` ()                          = "2h 5h 3h 8h Qh Tc Kc" |> shouldMatchCombination Flush
     [<Fact>] let ``is a full house`` ()                     = "2d 2h 2c 3d 3h Qh Tc" |> shouldMatchCombination FullHouse
     [<Fact>] let ``is a four same`` ()                      = "2d 2h 2c 2c 3h Qh Tc" |> shouldMatchCombination FourSame
-    [<Fact>] let ``is a straight flush`` ()                 = "2h 3h 4h 5h 6h Qh Tc" |> shouldMatchCombination Straight
+    [<Fact>] let ``is a straight flush`` ()                 = "2h 3h 4h 5h 6h Qh Tc" |> shouldMatchCombination StraightFlush
     [<Fact>] let ``is a straight flush starting by ace`` () = "Ah 2h 3h 4h 5h Qh Tc" |> shouldMatchCombination StraightFlush
-    [<Fact>] let ``is a royal straight flush`` ()           = "Ah Kh Qh Jh Th Qh Tc" |> shouldMatchCombination RoyalStraightFlush
+    [<Fact>] let ``is a royal straight flush`` ()           = "Ah Kh Qh Jh Th 5h Tc" |> shouldMatchCombination RoyalStraightFlush
