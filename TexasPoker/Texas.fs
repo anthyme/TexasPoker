@@ -21,10 +21,7 @@ let ifSome value boolean = if boolean then Some value else None
 
 let (|IsGroup|_|) pair three four cards = 
     let check size expected = getGroups fst size cards >= expected
-    match pair,three,four with
-    | _,_,1 -> check 4 four
-    | pair,three,0 -> (check 2 pair) && (check 3 three)
-    |> ifSome IsGroup
+    ((check 4 four) && (check 2 pair) && (check 3 three)) |> ifSome IsGroup
     
 let (|IsFlush|_|) cards = getGroups snd 5 cards >= 1 |> ifSome IsFlush
 
