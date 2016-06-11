@@ -25,7 +25,7 @@ let (|IsGroup|_|) pair three four cards =
     
 let (|IsFlush|_|) cards = getGroups snd 5 cards >= 1 |> ifSome IsFlush
 
-let (|IsStraight|IsStraightFlush|Nothing|) cards = 
+let (|IsStraight|IsStraightFlush|IsRoyalStraightFlush|Nothing|) cards = 
     let compareCard a b = match fst a, fst b with | Ace,Two -> -1 | a,b -> compare a b
     let folder cards card =
         match cards,card with
@@ -40,6 +40,7 @@ let (|IsStraight|IsStraightFlush|Nothing|) cards =
 
     let flushs = Seq.groupBy snd cards |> Seq.filter (snd >> Seq.length >> (<=) 5) |> Seq.map (snd >> List.ofSeq) |> Seq.tryHead
     match cards,flushs with
+    | _, Some([_; Ten,_; Jack,_; Queen,_; King,_; Ace,_]) -> IsRoyalStraightFlush
     | _, Some(flushs) when isStraight flushs -> IsStraightFlush
     | cards,_ when isStraight cards -> IsStraight
     | _ -> Nothing
@@ -47,6 +48,7 @@ let (|IsStraight|IsStraightFlush|Nothing|) cards =
 
 let findCombination (cardSet:string) = 
     match cardSet |> convertCardSet |> List.sort with
+    | IsRoyalStraightFlush -> RoyalStraightFlush
     | IsStraightFlush -> StraightFlush
     | IsGroup 0 0 1 -> FourSame
     | IsGroup 1 1 0 -> FullHouse
