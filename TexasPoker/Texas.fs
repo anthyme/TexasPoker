@@ -14,7 +14,16 @@ let parseRank = function
             
 let convertCardSet (txt:string) = txt.Split([|' '|]) |> Seq.map (fun x -> parseRank x.[0], parseSuit x.[1]) |> List.ofSeq
 
-let findCombination (cardSet:string) = HighCard
+let (|IsFourSame|_|) cards =
+    List.groupBy fst cards 
+    |> List.map (fun (r,s) -> r,Seq.length s)
+    |> Seq.exists (snd >> (=) 4)
+    |> function true -> Some IsFourSame | false -> None
+
+let findCombination (cardSet:string) = 
+    match cardSet |> convertCardSet |> List.sort with
+    | IsFourSame  -> FourSame
+    | _ -> HighCard
 
 
 
