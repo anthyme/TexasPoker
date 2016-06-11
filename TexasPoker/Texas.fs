@@ -14,15 +14,25 @@ let parseRank = function
             
 let convertCardSet (txt:string) = txt.Split([|' '|]) |> Seq.map (fun x -> parseRank x.[0], parseSuit x.[1]) |> List.ofSeq
 
-let (|IsFourSame|_|) cards =
-    List.groupBy fst cards 
-    |> List.map (fun (r,s) -> r,Seq.length s)
-    |> Seq.exists (snd >> (=) 4)
-    |> function true -> Some IsFourSame | false -> None
+let getGroups f size cards = 
+    List.groupBy f cards |> List.map (fun (r,s) -> r,Seq.length s) |> (Seq.filter (snd >> (=) size) >> Seq.length)
+
+let ifSome value boolean = if boolean then Some value else None
+
+let (|IsGroup|_|) pair three four cards = 
+    let check size expected = getGroups fst size cards >= expected
+    match pair,three,four with
+    | _,_,1 -> check 4 four
+    | pair,three,0 -> (check 2 pair) && (check 3 three)
+    |> ifSome IsGroup
 
 let findCombination (cardSet:string) = 
     match cardSet |> convertCardSet |> List.sort with
-    | IsFourSame  -> FourSame
+    | IsGroup 0 0 1 -> FourSame
+    | IsGroup 1 1 0 -> FullHouse
+    | IsGroup 0 1 0 -> ThreeSame
+    | IsGroup 2 0 0 -> TwoPair
+    | IsGroup 1 0 0 -> OnePair
     | _ -> HighCard
 
 
