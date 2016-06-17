@@ -59,6 +59,7 @@ let findCombination (cardSet:string) =
     | IsGroup 1 0 0 -> OnePair
     | _ -> HighCard
 
+let compareCardSets cardSet1 cardSet2  = compare (findCombination cardSet1) (findCombination cardSet2)
 
 
 
@@ -68,6 +69,7 @@ open Xunit
 type ``Given a card set`` () =
     let shouldConvertTo result cardSet = cardSet |> convertCardSet |> should equal result
     let shouldMatchCombination result cardSet = cardSet |> findCombination |> should equal result
+    let shouldBeBetterThan cardSet1 cardSet2 = compareCardSets cardSet1 cardSet2 |> should be (lessThan 0)
 
     [<Fact>] 
     let ``is convertible to model``() = 
@@ -82,7 +84,10 @@ type ``Given a card set`` () =
     [<Fact>] let ``is a straight ending by ace`` ()         = "Ad Kh Qc Jd Th Qh Tc" |> shouldMatchCombination Straight
     [<Fact>] let ``is a flush`` ()                          = "2h 5h 3h 8h Qh Tc Kc" |> shouldMatchCombination Flush
     [<Fact>] let ``is a full house`` ()                     = "2d 2h 2c 3d 3h Qh Tc" |> shouldMatchCombination FullHouse
-    [<Fact>] let ``is a four same`` ()                      = "2d 2h 2c 2c 3h Qh Tc" |> shouldMatchCombination FourSame
+    [<Fact>] let ``is a four same`` ()                      = "2d 2h 2c 2s 3h Qh Tc" |> shouldMatchCombination FourSame
     [<Fact>] let ``is a straight flush`` ()                 = "2h 3h 4h 5h 6h Qh Tc" |> shouldMatchCombination StraightFlush
     [<Fact>] let ``is a straight flush starting by ace`` () = "Ah 2h 3h 4h 5h Qh Tc" |> shouldMatchCombination StraightFlush
     [<Fact>] let ``is a royal straight flush`` ()           = "Ah Kh Qh Jh Th 5h Tc" |> shouldMatchCombination RoyalStraightFlush
+
+    [<Fact>] let ``one pair is better than high card`` ()   = "3d 8h Qh Tc Kc 2d 2h" |> shouldBeBetterThan "Ad 2h 3d 8h Qh Tc Kc"
+    [<Fact>] let ``four same is better than one pair`` ()   = "2d 2h 2c 2s 3h Qh Tc" |> shouldBeBetterThan "3d 8h Qh Tc Kc 2d 2h"
