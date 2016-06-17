@@ -4,6 +4,7 @@ type Suit = Spade|Heart|Club|Diamond
 type Rank = Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Jack|Queen|King|Ace
 type Card = Rank * Suit  
 type Combination = HighCard|OnePair|TwoPair|ThreeSame|Straight|Flush|FullHouse|FourSame|StraightFlush|RoyalStraightFlush
+type Hand = Combination * Card
 
 let parseSuit = function 's' -> Spade | 'h' -> Heart | 'c' -> Club | 'd' -> Diamond | x -> failwith (sprintf "unknown suit %c" x)
 
@@ -91,3 +92,6 @@ type ``Given a card set`` () =
 
     [<Fact>] let ``one pair is better than high card`` ()   = "3d 8h Qh Tc Kc 2d 2h" |> shouldBeBetterThan "Ad 2h 3d 8h Qh Tc Kc"
     [<Fact>] let ``four same is better than one pair`` ()   = "2d 2h 2c 2s 3h Qh Tc" |> shouldBeBetterThan "3d 8h Qh Tc Kc 2d 2h"
+
+    [<Fact>] let ``four Aces is better than four Twos`` ()  = "Ad Ah Ac As 3h Qh Tc" |> shouldBeBetterThan "2d 2h 2c 2s 3h Qh Tc"
+
